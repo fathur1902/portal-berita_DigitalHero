@@ -12,18 +12,19 @@ function App() {
     const fetchNews = async () => {
       setIsLoading(true);
       try {
-        // API 1: NewsAPI.org
-        const newsApiRes = await fetch(
-          `https://newsapi.org/v2/everything?q=artificial+intelligence&apiKey=bebf54cb27b14528b3a2f19f8e2fb33a&sortBy=publishedAt&pageSize=10`
+        // API 1: Mediastack (menggantikan NewsAPI.org)
+        const mediastackRes = await fetch(
+          `http://api.mediastack.com/v1/news?access_key=a296f6272490544af7a67159490949d5&keywords=artificial+intelligence&sort=published_desc&limit=10`
         );
-        const newsApiData = await newsApiRes.json();
-        const newsApiArticles = newsApiData.articles.map((article) => ({
-          title: article.title,
-          url: article.url,
-          publishedAt: article.publishedAt,
-          image:
-            article.urlToImage || "https://placehold.co/400x200?text=AI+News",
-        }));
+        const mediastackData = await mediastackRes.json();
+        const mediastackArticles = (mediastackData.data || []).map(
+          (article) => ({
+            title: article.title,
+            url: article.url,
+            publishedAt: article.published_at,
+            image: article.image || "https://placehold.co/400x200?text=AI+News",
+          })
+        );
 
         // API 2: GNews.io
         const gnewsRes = await fetch(
@@ -53,7 +54,7 @@ function App() {
         );
 
         const allNews = [
-          ...newsApiArticles,
+          ...mediastackArticles,
           ...gnewsArticles,
           ...newsDataArticles,
         ];
