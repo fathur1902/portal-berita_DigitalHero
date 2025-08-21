@@ -7,16 +7,27 @@ function App() {
   const [filteredNews, setFilteredNews] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState("Initializing...");
 
   useEffect(() => {
     const fetchNews = async () => {
       setIsLoading(true);
+      setError(null);
+      setDebugInfo("Fetching news...");
       try {
-        // API 1: Mediastack (menggantikan NewsAPI.org)
+        // API 1: Mediastack
         const mediastackRes = await fetch(
-          `http://api.mediastack.com/v1/news?access_key=a296f6272490544af7a67159490949d5&keywords=artificial+intelligence&sort=published_desc&limit=10`
+          `https://api.mediastack.com/v1/news?access_key=${import.meta.env.VITE_MEDIASTACK_KEY}&keywords=artificial+intelligence&sort=published_desc&limit=10`
         );
+        setDebugInfo(`Mediastack status: ${mediastackRes.status}`);
+        if (!mediastackRes.ok) {
+          throw new Error(
+            `Mediastack error: ${mediastackRes.status} ${mediastackRes.statusText}`
+          );
+        }
         const mediastackData = await mediastackRes.json();
+        // console.log("Mediastack data:", mediastackData); // Debug
         const mediastackArticles = (mediastackData.data || []).map(
           (article) => ({
             title: article.title,
@@ -28,9 +39,16 @@ function App() {
 
         // API 2: GNews.io
         const gnewsRes = await fetch(
-          `https://gnews.io/api/v4/search?q=AI&lang=en&max=10&apikey=a0564a9699535983cfa70a84cf151d2c`
+          `https://gnews.io/api/v4/search?q=AI&lang=en&max=10&apikey=${import.meta.env.VITE_GNEWS_KEY}`
         );
+        setDebugInfo(`GNews status: ${gnewsRes.status}`);
+        if (!gnewsRes.ok) {
+          throw new Error(
+            `GNews error: ${gnewsRes.status} ${gnewsRes.statusText}`
+          );
+        }
         const gnewsData = await gnewsRes.json();
+        // console.log("GNews data:", gnewsData); // Debug
         const gnewsArticles = gnewsData.articles.map((article) => ({
           title: article.title,
           url: article.url,
@@ -40,9 +58,16 @@ function App() {
 
         // API 3: NewsData.io
         const newsDataRes = await fetch(
-          `https://newsdata.io/api/1/news?apikey=pub_47a9e5dd919c4f338b94da0142080d52&q=AI&language=en`
+          `https://newsdata.io/api/1/news?apikey=${import.meta.env.VITE_NEWSDATA_KEY}&q=AI&language=en`
         );
+        setDebugInfo(`NewsData status: ${newsDataRes.status}`);
+        if (!newsDataRes.ok) {
+          throw new Error(
+            `NewsData error: ${newsDataRes.status} ${newsDataRes.statusText}`
+          );
+        }
         const newsDataData = await newsDataRes.json();
+        // console.log("NewsData data:", newsDataData); // Debug
         const newsDataArticles = (newsDataData.results || []).map(
           (article) => ({
             title: article.title,
@@ -68,8 +93,11 @@ function App() {
 
         setNews(sortedNews);
         setFilteredNews(sortedNews);
+        setDebugInfo(`Fetched ${sortedNews.length} articles`);
       } catch (error) {
         console.error("Error fetching news:", error);
+        setError(`Gagal mengambil berita: ${error.message}`);
+        setDebugInfo(`Error: ${error.message}`);
       } finally {
         setIsLoading(false);
       }
@@ -96,6 +124,8 @@ function App() {
         <h1 className="text-4xl font-extrabold mb-8 text-center text-blue-800 drop-shadow-md">
           Berita Utama AI Terbaru
         </h1>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        <p className="text-center text-gray-600 mb-4">Debug: {debugInfo}</p>
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
